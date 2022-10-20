@@ -1,48 +1,61 @@
 package main
 
 import (
-	"context"
-	"flag"
-	"log"
-
-	"github.com/hashicorp/terraform-plugin-framework/providerserver"
-	"github.com/hashicorp/terraform-provider-scaffolding-framework/internal/provider"
-)
-
-// Run "go generate" to format example terraform files and generate the docs for the registry/website
-
-// If you do not have terraform installed, you can remove the formatting command, but its suggested to
-// ensure the documentation is formatted properly.
-//go:generate terraform fmt -recursive ./examples/
-
-// Run the docs generation tool, check its repository for more information on how it works and how docs
-// can be customized.
-//go:generate go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs
-
-var (
-	// these will be set by the goreleaser configuration
-	// to appropriate values for the compiled binary
-	version string = "dev"
-
-	// goreleaser can also pass the specific commit if you want
-	// commit  string = ""
+	"fmt"
+	"github.com/hashicorp/terraform-provider-scaffolding-framework/internal/crudcrud"
 )
 
 func main() {
-	var debug bool
+	client := crudcrud.CrudcrudClient{Endpoint: "https://crudcrud.com/api/c6d5829262e24691988c3298126df5da"}
+	unicorn := crudcrud.Unicorn{Name: "nico", Age: 5, Colour: "blue"}
 
-	flag.BoolVar(&debug, "debug", false, "set to true to run the provider with support for debuggers like delve")
-	flag.Parse()
-
-	opts := providerserver.ServeOpts{
-		// TODO: Update this string with the published name of your provider.
-		Address: "registry.terraform.io/hashicorp/scaffolding",
-		Debug:   debug,
+	if err := client.Create(&unicorn); err != nil {
+		panic(err)
 	}
+	fmt.Printf("Create: %v\n", unicorn)
 
-	err := providerserver.Serve(context.Background(), provider.New(version), opts)
-
+	unicorn2, err := client.Get(unicorn.Id)
 	if err != nil {
-		log.Fatal(err.Error())
+		panic(err)
 	}
+	fmt.Printf("Get: %v\n", unicorn2)
+
+	unicorn.Name = "david"
+	if err := client.Update(unicorn); err != nil {
+		panic(err)
+	}
+	fmt.Printf("Update: %v\n", unicorn)
+
+	unicorn3, err := client.Get(unicorn.Id)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("Get: %v\n", unicorn3)
+
+	if err := client.Delete(unicorn.Id); err != nil {
+		panic(err)
+	}
+	fmt.Printf("Create: %v\n", unicorn)
+
+	_, err = client.Get(unicorn.Id)
+	if err != nil {
+		panic(err)
+	}
+
+	//var debug bool
+	//
+	//flag.BoolVar(&debug, "debug", false, "set to true to run the provider with support for debuggers like delve")
+	//flag.Parse()
+	//
+	//opts := providerserver.ServeOpts{
+	//	// TODO: Update this string with the published name of your provider.
+	//	Address: "registry.terraform.io/hashicorp/scaffolding",
+	//	Debug:   debug,
+	//}
+	//
+	//err := providerserver.Serve(context.Background(), provider.New(version), opts)
+	//
+	//if err != nil {
+	//	log.Fatal(err.Error())
+	//}
 }
