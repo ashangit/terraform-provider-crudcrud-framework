@@ -3,10 +3,9 @@ package provider
 import (
 	"context"
 	"fmt"
-	"net/http"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -18,7 +17,7 @@ import (
 var _ resource.Resource = &CrudcrudResource{}
 var _ resource.ResourceWithImportState = &CrudcrudResource{}
 
-func CrudcrudResource() resource.Resource {
+func NewCrudcrudResource() resource.Resource {
 	return &CrudcrudResource{}
 }
 
@@ -28,11 +27,11 @@ type CrudcrudResource struct {
 }
 
 // ExampleResourceModel describes the resource data model.
-type CrudcrudModel struct {
-	name types.String `tfsdk:"name"`
+type CrudcrudResourceModel struct {
+	name  types.String `tfsdk:"name"`
 	color types.String `tfsdk:"color"`
-	age types.Int64 `tfsdk:"age"`
-	Id                    types.String `tfsdk:"id"`
+	age   types.Int64  `tfsdk:"age"`
+	Id    types.String `tfsdk:"id"`
 }
 
 func (r *CrudcrudResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -102,10 +101,10 @@ func (r *CrudcrudResource) Create(ctx context.Context, req resource.CreateReques
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	unicorn = crudcrud.Unicorn{ name: data.Name.Value, age: data.Age.Value, color: data.Color.Value }
-	
+	unicorn := crudcrud.Unicorn{Name: data.name.Value, Age: int(data.age.Value), Color: data.color.Value}
+
 	if err := r.client.Create(&unicorn); err != nil {
-		resp.Diagnostics.AddError("Failed to create Unicorn","detailed failed")
+		resp.Diagnostics.AddError("Failed to create Unicorn", "detailed failed")
 		return
 	}
 
@@ -119,22 +118,23 @@ func (r *CrudcrudResource) Create(ctx context.Context, req resource.CreateReques
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *CrudcrudResource) Read(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+func (r *CrudcrudResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *CrudcrudResourceModel
 
 	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	
-	if err := r.client.Get(data.Id.Value); err != nil {
-		resp.Diagnostics.AddError("Failed to read Unicorn","detailed failed")
+
+	unicorn, err := r.client.Get(data.Id.Value)
+	if err != nil {
+		resp.Diagnostics.AddError("Failed to read Unicorn", "detailed failed")
 		return
 	}
 
-	fmt.Printf("Read: %v\n", data)
+	fmt.Printf("Read: %v\n", unicorn)
 
 	// Write logs using the tflog package
 	// Documentation: https://terraform.io/plugin/log
@@ -144,7 +144,7 @@ func (r *CrudcrudResource) Read(ctx context.Context, req resource.CreateRequest,
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *CrudcrudResource) Update(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+func (r *CrudcrudResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data *CrudcrudResourceModel
 
 	// Read Terraform plan data into the model
@@ -153,10 +153,10 @@ func (r *CrudcrudResource) Update(ctx context.Context, req resource.CreateReques
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	unicorn = crudcrud.Unicorn{ id: data.Id.Value, name: data.Name.Value, age: data.Age.Value, color: data.Color.Value }
-	
-	if err := r.client.Update(&unicorn); err != nil {
-		resp.Diagnostics.AddError("Failed to update Unicorn","detailed failed")
+	unicorn := crudcrud.Unicorn{Id: data.Id.Value, Name: data.name.Value, Age: int(data.age.Value), Color: data.color.Value}
+
+	if err := r.client.Update(unicorn); err != nil {
+		resp.Diagnostics.AddError("Failed to update Unicorn", "detailed failed")
 		return
 	}
 
@@ -170,18 +170,18 @@ func (r *CrudcrudResource) Update(ctx context.Context, req resource.CreateReques
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *CrudcrudResource) Delete(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+func (r *CrudcrudResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *CrudcrudResourceModel
 
 	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	
+
 	if err := r.client.Delete(data.Id.Value); err != nil {
-		resp.Diagnostics.AddError("Failed to delete Unicorn","detailed failed")
+		resp.Diagnostics.AddError("Failed to delete Unicorn", "detailed failed")
 		return
 	}
 
@@ -193,4 +193,8 @@ func (r *CrudcrudResource) Delete(ctx context.Context, req resource.CreateReques
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (r *CrudcrudResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }

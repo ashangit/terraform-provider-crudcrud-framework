@@ -12,8 +12,8 @@ import (
 const resource string = "unicorn"
 
 type Unicorn struct {
-	Id, Name, Colour string
-	Age              int
+	Id, Name, Color string
+	Age             int
 }
 
 type CrudcrudClient struct {

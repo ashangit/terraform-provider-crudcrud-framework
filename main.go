@@ -7,7 +7,7 @@ import (
 
 func main() {
 	client := crudcrud.CrudcrudClient{Endpoint: "https://crudcrud.com/api/c6d5829262e24691988c3298126df5da"}
-	unicorn := crudcrud.Unicorn{Name: "nico", Age: 5, Colour: "blue"}
+	unicorn := crudcrud.Unicorn{Name: "nico", Age: 5, Color: "blue"}
 
 	if err := client.Create(&unicorn); err != nil {
 		panic(err)

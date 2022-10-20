@@ -1,7 +1,14 @@
 package provider
 
 import (
-	"fmt"
+	"context"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/provider"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-provider-scaffolding-framework/internal/crudcrud"
 )
 
@@ -47,22 +54,22 @@ func (p *CrudcrudProvider) Configure(ctx context.Context, req provider.Configure
 	// if data.Endpoint.IsNull() { /* ... */ }
 
 	// Example client configuration for data sources and resources
-	client := crudcrud.CrudcrudClient{Endpoint: p.Endpoint.Value}
+	client := crudcrud.CrudcrudClient{Endpoint: data.Endpoint.Value}
 	//resp.DataSourceData = client
-	//resp.ResourceData = client
+	resp.ResourceData = client
 }
 
 func (p *CrudcrudProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
-		CrudcrudResource,
+		NewCrudcrudResource,
 	}
 }
 
-// func (p *CrudcrudProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
-//	return []func() datasource.DataSource{
-//		CrudcrudDataSource,
-//	}
-//}
+func (p *CrudcrudProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
+	return []func() datasource.DataSource{
+		//CrudcrudDataSource,
+	}
+}
 
 func New(version string) func() provider.Provider {
 	return func() provider.Provider {
