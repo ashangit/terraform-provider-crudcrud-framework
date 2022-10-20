@@ -1,53 +1,41 @@
 package provider
 
 import (
-	"context"
-	"net/http"
-
-	"github.com/hashicorp/terraform-plugin-framework/datasource"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/provider"
-	"github.com/hashicorp/terraform-plugin-framework/resource"
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
-	"github.com/hashicorp/terraform-plugin-framework/types"
+	"fmt"
+	"github.com/hashicorp/terraform-provider-scaffolding-framework/internal/crudcrud"
 )
 
 // Ensure ScaffoldingProvider satisfies various provider interfaces.
-var _ provider.Provider = &ScaffoldingProvider{}
-var _ provider.ProviderWithMetadata = &ScaffoldingProvider{}
+var _ provider.Provider = &CrudcrudProvider{}
+var _ provider.ProviderWithMetadata = &CrudcrudProvider{}
 
-// ScaffoldingProvider defines the provider implementation.
-type ScaffoldingProvider struct {
-	// version is set to the provider version on release, "dev" when the
-	// provider is built and ran locally, and "test" when running acceptance
-	// testing.
+type CrudcrudProvider struct {
 	version string
 }
 
-// ScaffoldingProviderModel describes the provider data model.
-type ScaffoldingProviderModel struct {
+type CrudcrudProviderModel struct {
 	Endpoint types.String `tfsdk:"endpoint"`
 }
 
-func (p *ScaffoldingProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
-	resp.TypeName = "scaffolding"
+func (p *CrudcrudProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
+	resp.TypeName = "crudcrud"
 	resp.Version = p.version
 }
 
-func (p *ScaffoldingProvider) GetSchema(ctx context.Context) (tfsdk.Schema, diag.Diagnostics) {
+func (p *CrudcrudProvider) GetSchema(ctx context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
 		Attributes: map[string]tfsdk.Attribute{
 			"endpoint": {
-				MarkdownDescription: "Example provider attribute",
-				Optional:            true,
+				MarkdownDescription: "Crudcrud provider endpoint",
+				Required:            true,
 				Type:                types.StringType,
 			},
 		},
 	}, nil
 }
 
-func (p *ScaffoldingProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
-	var data ScaffoldingProviderModel
+func (p *CrudcrudProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
+	var data CrudcrudProviderModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 
@@ -59,26 +47,26 @@ func (p *ScaffoldingProvider) Configure(ctx context.Context, req provider.Config
 	// if data.Endpoint.IsNull() { /* ... */ }
 
 	// Example client configuration for data sources and resources
-	client := http.DefaultClient
-	resp.DataSourceData = client
-	resp.ResourceData = client
+	client := crudcrud.CrudcrudClient{Endpoint: p.Endpoint.Value}
+	//resp.DataSourceData = client
+	//resp.ResourceData = client
 }
 
-func (p *ScaffoldingProvider) Resources(ctx context.Context) []func() resource.Resource {
+func (p *CrudcrudProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
-		NewExampleResource,
+		CrudcrudResource,
 	}
 }
 
-func (p *ScaffoldingProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
-	return []func() datasource.DataSource{
-		NewExampleDataSource,
-	}
-}
+// func (p *CrudcrudProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
+//	return []func() datasource.DataSource{
+//		CrudcrudDataSource,
+//	}
+//}
 
 func New(version string) func() provider.Provider {
 	return func() provider.Provider {
-		return &ScaffoldingProvider{
+		return &CrudcrudProvider{
 			version: version,
 		}
 	}
